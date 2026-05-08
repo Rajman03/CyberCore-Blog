@@ -1,0 +1,24 @@
+{
+  "name": "secure-blog-lab",
+  "version": "1.0.0",
+  "description": "Secure Blog Lab with Database Sessions and Argon2id",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "argon2": "^0.40.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "ejs": "^5.0.2",
+    "express": "^4.19.2",
+    "express-ejs-layouts": "^2.5.1",
+    "sqlite3": "^5.1.7",
+    "xss": "^1.0.15"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

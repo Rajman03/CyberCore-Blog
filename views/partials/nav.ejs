@@ -1,0 +1,62 @@
+<nav>
+    <div class="logo" onclick="window.location.href='/'" style="cursor: pointer;">
+        <%= locals.logo || 'SECURE.BLOG' %>
+    </div>
+    <div id="nav-links" style="display: flex; align-items: center; gap: 20px;">
+        <% if (locals.user) { %>
+            <div style="display: flex; align-items: center; gap: 12px; margin-right: 10px; padding-right: 20px; border-right: 1px solid var(--glass-border);">
+                <span style="opacity:0.6; font-size:0.85rem;">Witaj, <strong style="color: var(--accent);"><%= user.username %></strong></span>
+                <span class="badge badge-<%= user.role %>" style="font-size: 0.6rem;"><%= user.role %></span>
+            </div>
+
+            <a href="/" class="nav-link">Home</a>
+            <a href="/profile.html" class="nav-link">Mój Profil</a>
+            
+            <% if (user.role === 'admin') { %>
+                <a href="/admin.html" class="nav-link" style="color: var(--primary); font-weight: 800;">Panel Admina</a>
+            <% } %>
+
+            <button onclick="logout()" class="secondary" style="padding: 8px 16px; font-size: 0.8rem; border-color: rgba(244, 63, 94, 0.3); color: var(--danger);">Wyloguj</button>
+        <% } else { %>
+            <a href="/login.html" class="nav-link">Logowanie</a>
+            <a href="/register.html" class="btn-primary-small" style="text-decoration: none;">Dołącz do nas</a>
+        <% } %>
+    </div>
+</nav>
+
+<style>
+.nav-link {
+    color: white;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+.nav-link:hover {
+    opacity: 1;
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+.btn-primary-small {
+    background: var(--primary);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    transition: all 0.3s ease;
+}
+.btn-primary-small:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4);
+}
+</style>
+
+<script>
+async function logout() {
+    await fetch('/auth/logout', { method: 'POST' });
+    window.location.href = '/';
+}
+</script>
