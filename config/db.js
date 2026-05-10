@@ -52,6 +52,18 @@ const initDB = () => {
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
+        db.run(`CREATE TABLE IF NOT EXISTS login_attempts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip_address TEXT NOT NULL,
+            email TEXT NOT NULL,
+            success INTEGER DEFAULT 0,
+            user_agent TEXT,
+            attempted_at INTEGER NOT NULL
+        )`);
+
+        db.run(`CREATE INDEX IF NOT EXISTS idx_login_attempts_ip ON login_attempts(ip_address)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_login_attempts_time ON login_attempts(attempted_at)`);
+
         // Seed Admin
         db.get('SELECT id FROM users WHERE username = ?', ['admin'], async (err, row) => {
             if (!row) {
@@ -66,6 +78,9 @@ const initDB = () => {
         db.run('ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0', () => {});
         db.run('ALTER TABLE users ADD COLUMN lockout_until INTEGER DEFAULT NULL', () => {});
         db.run('ALTER TABLE users ADD COLUMN api_token TEXT', () => {});
+
+        // Auto-cleanup: usuń login_attempts starsze niż 7 dni
+        db.run('DELETE FROM login_attempts WHERE attempted_at < ?', [Date.now() - 7 * 24 * 60 * 60 * 1000]);
     });
 };
 

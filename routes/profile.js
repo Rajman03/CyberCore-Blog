@@ -4,6 +4,7 @@ const argon2 = require('argon2');
 const { db } = require('../config/db');
 const { requireAuth } = require('../middleware/auth');
 const { validate, profileSchemas } = require('../middleware/validation');
+const { isPasswordCompromised } = require('../middleware/bruteforce');
 
 router.get('/', requireAuth, (req, res) => {
     res.json(req.user);
@@ -19,6 +20,13 @@ router.patch('/', requireAuth, validate(profileSchemas.update), (req, res) => {
 
 router.patch('/password', requireAuth, validate(profileSchemas.password), (req, res) => {
     const { oldPassword, newPassword } = req.body;
+
+    // Sprawdź czy nowe hasło nie jest na liście skompromitowanych
+    if (isPasswordCompromised(newPassword)) {
+        return res.status(400).json({ 
+            error: '🚫 To hasło znajduje się na liście najczęściej łamanych haseł. Wybierz silniejsze hasło.' 
+        });
+    }
     db.get('SELECT password_hash FROM users WHERE id = ?', [req.user.id], async (err, user) => {
         if (err || !user) return res.status(500).json({ error: 'Błąd serwera' });
         if (!(await argon2.verify(user.password_hash, oldPassword))) {
