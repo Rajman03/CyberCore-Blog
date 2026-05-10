@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     role TEXT DEFAULT 'user',
     reset_token TEXT,
-    reset_expires INTEGER
+    reset_expires INTEGER,
+    api_token TEXT
 );
 
 -- 2. Sessions Table (Persistent Session Management)

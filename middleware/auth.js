@@ -1,6 +1,17 @@
 const { db } = require('../config/db');
 
 const requireAuth = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        db.get('SELECT id, username, email, role, api_token FROM users WHERE api_token = ?', [token], (err, user) => {
+            if (err || !user) return res.status(401).json({ error: 'Invalid API Token' });
+            req.user = user;
+            return next();
+        });
+        return;
+    }
+
     const sessionId = req.signedCookies.session_id;
     if (!sessionId) return res.status(401).json({ error: 'Session required' });
 
@@ -12,7 +23,7 @@ const requireAuth = (req, res, next) => {
             return res.status(401).json({ error: 'Session expired' });
         }
 
-        db.get('SELECT id, username, email, role FROM users WHERE id = ?', [session.user_id], (err, user) => {
+        db.get('SELECT id, username, email, role, api_token FROM users WHERE id = ?', [session.user_id], (err, user) => {
             if (err || !user) return res.status(401).json({ error: 'User not found' });
             req.user = user;
             next();
@@ -21,13 +32,23 @@ const requireAuth = (req, res, next) => {
 };
 
 const loadUserOptional = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        db.get('SELECT id, username, email, role, api_token FROM users WHERE api_token = ?', [token], (err, user) => {
+            if (user) req.user = user;
+            return next();
+        });
+        return;
+    }
+
     const sessionId = req.signedCookies.session_id;
     if (!sessionId) return next();
 
     db.get('SELECT * FROM sessions WHERE session_id = ?', [sessionId], (err, session) => {
         if (err || !session || Date.now() > session.expires_at) return next();
 
-        db.get('SELECT id, username, email, role FROM users WHERE id = ?', [session.user_id], (err, user) => {
+        db.get('SELECT id, username, email, role, api_token FROM users WHERE id = ?', [session.user_id], (err, user) => {
             if (user) req.user = user;
             next();
         });

@@ -12,8 +12,9 @@ router.post('/register', validate(authSchemas.register), async (req, res) => {
     const { username, email, password } = req.body;
     try {
         const hash = await argon2.hash(password, { type: argon2.argon2id });
-        db.run('INSERT INTO users (id, username, email, password_hash) VALUES (?, ?, ?, ?)', 
-                [crypto.randomUUID(), username, email, hash], (err) => {
+        const apiToken = crypto.randomBytes(32).toString('hex');
+        db.run('INSERT INTO users (id, username, email, password_hash, api_token) VALUES (?, ?, ?, ?, ?)', 
+                [crypto.randomUUID(), username, email, hash, apiToken], (err) => {
             if (err) return res.status(400).json({ error: 'Username or email already exists' });
             res.status(201).json({ message: 'User registered' });
         });
@@ -73,7 +74,7 @@ router.post('/logout', (req, res) => {
 });
 
 router.get('/me', requireAuth, (req, res) => {
-    res.json({ user: { username: req.user.username, role: req.user.role } });
+    res.json({ user: { username: req.user.username, role: req.user.role, token: req.user.api_token } });
 });
 
 module.exports = router;
