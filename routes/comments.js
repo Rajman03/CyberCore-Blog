@@ -5,10 +5,11 @@ const { db } = require('../config/db');
 const { requireAuth } = require('../middleware/auth');
 const { validate, commentSchemas } = require('../middleware/validation');
 
-router.get('/:postId/comments', (req, res) => {
+router.get('/posts/:postId/comments', (req, res) => {
     db.all(`SELECT comments.*, users.username FROM comments 
             JOIN users ON comments.user_id = users.id 
             WHERE post_id = ? ORDER BY created_at ASC`, [req.params.postId], (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
         res.json(rows || []);
     });
 });

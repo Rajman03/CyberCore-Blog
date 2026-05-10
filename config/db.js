@@ -19,7 +19,8 @@ const initDB = () => {
             reset_token TEXT,
             reset_expires INTEGER,
             failed_login_attempts INTEGER DEFAULT 0,
-            lockout_until INTEGER DEFAULT NULL
+            lockout_until INTEGER DEFAULT NULL,
+            api_token TEXT
         )`);
 
         db.run(`CREATE TABLE IF NOT EXISTS sessions (
@@ -55,19 +56,16 @@ const initDB = () => {
         db.get('SELECT id FROM users WHERE username = ?', ['admin'], async (err, row) => {
             if (!row) {
                 const hash = await argon2.hash('admin123', { type: argon2.argon2id });
-                db.run(`INSERT INTO users (id, username, email, password_hash, role) 
-                        VALUES (?, ?, ?, ?, ?)`, [crypto.randomUUID(), 'admin', 'admin@example.com', hash, 'admin']);
+                const token = crypto.randomBytes(32).toString('hex');
+                db.run(`INSERT INTO users (id, username, email, password_hash, role, api_token) 
+                        VALUES (?, ?, ?, ?, ?, ?)`, [crypto.randomUUID(), 'admin', 'admin@example.com', hash, 'admin', token]);
                 console.log('💎 Admin seeded successfully.');
             }
         });
 
-        // Migration for existing tables
-        db.run('ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0', (err) => {
-            // ignore error if column already exists
-        });
-        db.run('ALTER TABLE users ADD COLUMN lockout_until INTEGER DEFAULT NULL', (err) => {
-            // ignore error if column already exists
-        });
+        db.run('ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0', () => {});
+        db.run('ALTER TABLE users ADD COLUMN lockout_until INTEGER DEFAULT NULL', () => {});
+        db.run('ALTER TABLE users ADD COLUMN api_token TEXT', () => {});
     });
 };
 

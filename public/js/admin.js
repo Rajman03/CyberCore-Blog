@@ -1,27 +1,40 @@
 /**
- * SECURE.BLOG Admin Logic
- * Wykorzystuje bibliotekę API z core.js
+ * SECURE.BLOG — Admin Logic
+ * Korzysta z globalnej biblioteki API zdefiniowanej w core.js
  */
 
-async function checkAuth() {
-    // API.fetch automatycznie obsłuży 401
-    await API.fetch('/auth/me');
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Escapuje HTML, zapobiegając XSS przy wstawianiu danych użytkownika do innerHTML */
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(String(str)));
+    return div.innerHTML;
 }
+
+function renderEmptyState(message) {
+    return `<div style="text-align:center; padding:2rem; color:var(--text-muted);">${escapeHtml(message)}</div>`;
+}
+
+function renderLoading() {
+    return `<div style="text-align:center; padding:1.5rem; color:var(--text-muted);">Ładowanie...</div>`;
+}
+
+// ─── Post Form ────────────────────────────────────────────────────────────────
 
 document.getElementById('add-post-form').onsubmit = async (e) => {
     e.preventDefault();
-    const btn = e.target.querySelector('button');
-    const msg = document.getElementById('status-msg');
-    
-    const title = document.getElementById('post-title').value;
-    const content = document.getElementById('post-content').value;
+    const btn  = e.target.querySelector('button[type="submit"]');
+    const msg  = document.getElementById('status-msg');
+    const title   = document.getElementById('post-title').value.trim();
+    const content = document.getElementById('post-content').value.trim();
+
+    btn.disabled = true;
+    btn.innerText = 'Publikowanie...';
+    msg.innerText = '';
 
     try {
-        btn.disabled = true;
-        btn.innerText = 'Publikowanie...';
-        
         await API.addPost(title, content);
-        
         msg.style.color = 'var(--accent)';
         msg.innerText = '✨ Post opublikowany pomyślnie!';
         e.target.reset();
@@ -31,38 +44,44 @@ document.getElementById('add-post-form').onsubmit = async (e) => {
         msg.innerText = `❌ ${err.message}`;
     } finally {
         btn.disabled = false;
-        btn.innerText = 'Opublikuj Post';
+        btn.innerText = '🚀 Opublikuj Post';
     }
 };
 
+// ─── Posts ────────────────────────────────────────────────────────────────────
+
 async function loadAdminPosts() {
     const list = document.getElementById('admin-posts-list');
+    list.innerHTML = renderLoading();
+
     try {
         const posts = await API.getPosts();
         document.getElementById('stat-posts').innerText = posts.length;
         list.innerHTML = '';
 
         if (posts.length === 0) {
-            list.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-muted);">Brak postów w systemie.</div>';
+            list.innerHTML = renderEmptyState('Brak postów w systemie.');
             return;
         }
 
         posts.forEach(post => {
             const item = document.createElement('div');
-            item.className = 'fade-in';
-            item.style.cssText = 'background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.2rem; display: flex; justify-content: space-between; align-items: center;';
-            
+            item.className = 'admin-list-item fade-in';
             item.innerHTML = `
                 <div>
-                    <h3 style="color: var(--text-main); font-size: 1rem; margin-bottom: 0.2rem;">${post.title}</h3>
-                    <p style="font-size: 0.75rem; color: var(--text-muted);">Autor: ${post.author} • ${new Date(post.created_at).toLocaleDateString()}</p>
+                    <h3 class="admin-list-title">${escapeHtml(post.title)}</h3>
+                    <p class="admin-list-meta">
+                        Autor: ${escapeHtml(post.author)} •
+                        ${new Date(post.created_at).toLocaleDateString('pl-PL')}
+                    </p>
                 </div>
-                <button class="danger" onclick="deletePost(${post.id})" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 8px;">Usuń</button>
+                <button class="danger admin-list-btn">🗑 Usuń</button>
             `;
+            item.querySelector('button').addEventListener('click', () => deletePost(post.id));
             list.appendChild(item);
         });
     } catch (err) {
-        list.innerHTML = '<div style="color:var(--danger);">Błąd ładowania postów.</div>';
+        list.innerHTML = `<div style="color:var(--danger);">❌ Błąd ładowania postów: ${escapeHtml(err.message)}</div>`;
     }
 }
 
@@ -76,40 +95,52 @@ async function deletePost(id) {
     }
 }
 
+// ─── Users ────────────────────────────────────────────────────────────────────
+
 async function loadUsers() {
     const list = document.getElementById('users-list');
+    list.innerHTML = renderLoading();
+
     try {
         const users = await API.fetch('/api/users');
         document.getElementById('stat-users').innerText = users.length;
         list.innerHTML = '';
 
-        users.forEach(user => {
-            const div = document.createElement('div');
-            div.className = 'fade-in';
-            div.style.cssText = 'background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1rem 1.2rem; display: flex; justify-content: space-between; align-items: center;';
-            
-            const isSelf = user.username === localStorage.getItem('username');
+        if (users.length === 0) {
+            list.innerHTML = renderEmptyState('Brak użytkowników w systemie.');
+            return;
+        }
 
+        const currentUsername = localStorage.getItem('username');
+
+        users.forEach(user => {
+            const isSelf     = user.username === currentUsername;
+            const targetRole = user.role === 'admin' ? 'user' : 'admin';
+
+            const div = document.createElement('div');
+            div.className = 'admin-list-item fade-in';
             div.innerHTML = `
-                <div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <strong style="color:var(--text-main);">${user.username}</strong>
-                        <span class="badge badge-${user.role}" style="font-size: 0.6rem;">${user.role}</span>
-                    </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <strong style="color:var(--text-main);">${escapeHtml(user.username)}</strong>
+                    <span class="badge badge-${escapeHtml(user.role)}" style="font-size: 0.6rem;">${escapeHtml(user.role)}</span>
                 </div>
                 <div>
-                    ${!isSelf ? `
-                        <button onclick="changeRole('${user.id}', '${user.role === 'admin' ? 'user' : 'admin'}')" 
-                                style="background: ${user.role === 'admin' ? 'rgba(255,255,255,0.05)' : 'var(--primary)'}; font-size: 0.7rem; padding: 6px 12px; border: 1px solid var(--glass-border);">
-                            Zmień na ${user.role === 'admin' ? 'User' : 'Admin'}
-                        </button>
-                    ` : '<span style="font-size: 0.7rem; color: var(--accent); font-weight:700; opacity:0.8;">TO TY</span>'}
+                    ${isSelf
+                        ? '<span style="font-size:0.7rem; color:var(--accent); font-weight:700; opacity:0.8;">TO TY</span>'
+                        : `<button class="admin-list-btn">Zmień na ${escapeHtml(targetRole === 'admin' ? 'Admin' : 'User')}</button>`
+                    }
                 </div>
             `;
+
+            if (!isSelf) {
+                div.querySelector('button').addEventListener('click', () => changeRole(user.id, targetRole));
+            }
+
             list.appendChild(div);
         });
     } catch (err) {
-        console.error('Error loading users:', err);
+        list.innerHTML = `<div style="color:var(--danger);">❌ Błąd ładowania użytkowników.</div>`;
+        console.error('loadUsers error:', err);
     }
 }
 
@@ -124,6 +155,16 @@ async function changeRole(userId, newRole) {
         alert('Błąd zmiany roli: ' + err.message);
     }
 }
+
+// ─── CSS klasy dla elementów listy ───────────────────────────────────────────
+// Dodaj do style.css jeśli jeszcze nie ma:
+// .admin-list-item { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+//   border-radius: 12px; padding: 1.2rem; display: flex; justify-content: space-between; align-items: center; }
+// .admin-list-title { color: var(--text-main); font-size: 1rem; margin-bottom: 0.2rem; }
+// .admin-list-meta  { font-size: 0.75rem; color: var(--text-muted); }
+// .admin-list-btn   { padding: 6px 14px; font-size: 0.75rem; }
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
 
 window.initAdmin = () => {
     loadAdminPosts();

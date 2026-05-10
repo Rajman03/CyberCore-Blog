@@ -49,20 +49,21 @@ app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 app.use(cookieParser(process.env.SECRET_KEY));
 app.use(cors({ origin: true, credentials: true }));
 
+// Sensitive File Protection (MUST be before static files)
+app.use((req, res, next) => {
+    const url = req.url.toLowerCase();
+    const forbidden = ['.db', '.sql', '.env', 'node_modules'];
+    if (forbidden.some(ext => url.endsWith(ext) || url.includes(ext)) || url.includes('/db/')) {
+        return res.status(403).json({ error: '🚫 Access Denied: Sensitive File' });
+    }
+    next();
+});
+
 // 5. Static Files
 app.use(express.static('public'));
 
 // Favicon Fix
 app.get('/favicon.ico', (req, res) => res.status(204).end());
-
-// Sensitive File Protection
-app.use((req, res, next) => {
-    const forbidden = ['.db', '.sql', '.env', '.json', 'node_modules'];
-    if (forbidden.some(ext => req.url.toLowerCase().endsWith(ext)) || req.url.includes('/db/')) {
-        return res.status(403).json({ error: '🚫 Access Denied: Sensitive File' });
-    }
-    next();
-});
 
 // --- Routes Modules ---
 const authRoutes = require('./routes/auth');

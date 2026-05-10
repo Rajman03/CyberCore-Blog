@@ -8,7 +8,7 @@ const { validate, authSchemas } = require('../middleware/validation');
 
 const SESSION_EXPIRY = 24 * 60 * 60 * 1000;
 
-router.post('/register', validate(authSchemas.register), async (req, res) => {
+router.post('/register', validate(authSchemas.register), async (req, res, next) => {
     const { username, email, password } = req.body;
     try {
         const hash = await argon2.hash(password, { type: argon2.argon2id });

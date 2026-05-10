@@ -34,7 +34,7 @@ const postSchemas = {
 
 const commentSchemas = {
     create: Joi.object({
-        post_id: Joi.string().required(),
+        post_id: Joi.number().integer().required(),
         content: Joi.string().min(1).max(500).required()
     })
 };

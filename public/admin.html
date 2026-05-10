@@ -15,66 +15,83 @@
         <div id="nav-links" style="display: flex; align-items: center; gap: 20px;"></div>
     </nav>
 
-    <div class="container fade-in" style="max-width: 1300px;">
-        <div class="dashboard-grid">
-            <aside style="display: flex; flex-direction: column; gap: 1.5rem;">
-                <div class="glass-card" style="padding: 1.5rem;">
-                    <h4 style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.8rem; text-transform: uppercase;">Status Systemu</h4>
-                    <div style="display: flex; align-items: center; gap: 10px; color: var(--accent); font-weight: 700;">
-                        <span style="width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent);"></span>
-                        Silnik SQL Online
+    <div class="container fade-in">
+        <div class="admin-header">
+            <h1>
+                Panel <span class="gradient-text-primary">Zarządzania</span>
+            </h1>
+            <p>Zarządzaj treścią i użytkownikami z poziomu bezpiecznego środowiska.</p>
+        </div>
+
+        <div class="dashboard-grid" style="align-items: start;">
+            <aside class="admin-aside">
+                <div class="glass-card" style="padding: 1.5rem; border-left: 4px solid var(--accent);">
+                    <h4 class="text-upper-bold" style="margin-bottom: 1rem; font-size: 0.8rem;">Status Serwera</h4>
+                    <div style="display: flex; align-items: center; gap: 10px; color: var(--accent); font-weight: 700; font-size: 1.1rem;">
+                        <span style="width: 12px; height: 12px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 15px var(--accent); animation: pulse 2s infinite;"></span>
+                        System Online
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">Łącznie Postów</span>
-                    <div class="stat-val" id="stat-posts">0</div>
+                <div class="stat-card" style="position: relative; overflow: hidden;">
+                    <div class="admin-stat-bg-icon">📝</div>
+                    <span class="text-upper-bold">Opublikowane Posty</span>
+                    <div class="stat-val" id="stat-posts" style="font-size: 2.5rem;">0</div>
                 </div>
 
-                <div class="stat-card">
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">Użytkownicy</span>
-                    <div class="stat-val" id="stat-users">0</div>
+                <div class="stat-card" style="position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.02) 100%);">
+                    <div class="admin-stat-bg-icon">👥</div>
+                    <span class="text-upper-bold">Użytkownicy</span>
+                    <div class="stat-val gradient-text-green" id="stat-users" style="font-size: 2.5rem;">0</div>
                 </div>
 
-                <div class="glass-card" style="padding: 1.5rem;">
-                    <h4 style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.8rem; text-transform: uppercase;">Twoja Sesja</h4>
-                    <p id="admin-name" style="font-weight: 700; margin-bottom: 0.5rem;">Ładowanie...</p>
-                    <span class="badge badge-admin">Administrator</span>
+                <div class="glass-card" style="padding: 1.5rem; text-align: center;">
+                    <div class="profile-avatar" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 1rem;">👑</div>
+                    <h4 class="text-upper-bold" style="margin-bottom: 0.5rem; font-size: 0.8rem;">Aktywna Sesja</h4>
+                    <p id="admin-name" style="font-weight: 800; font-size: 1.2rem; margin-bottom: 0.8rem;">Ładowanie...</p>
+                    <span class="badge badge-admin" style="padding: 6px 12px; font-size: 0.75rem;">Administrator</span>
                 </div>
             </aside>
 
-            <main style="display: flex; flex-direction: column; gap: 2rem;">
-                <div class="glass-card">
-                    <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
-                        <span>🛡️</span> Centrum Dowodzenia
+            <main class="admin-main">
+                <div class="glass-card" style="padding: 2.5rem;">
+                    <h2 class="admin-card-title">
+                        <span class="admin-card-icon blue">✨</span> 
+                        <span class="gradient-text-silver">Utwórz Nowy Wpis</span>
                     </h2>
                     <form id="add-post-form">
                         <div class="form-group">
-                            <label>Tytuł Posta</label>
-                            <input type="text" id="post-title" required placeholder="O czym dziś napiszemy?">
+                            <label style="color: var(--text-main); font-weight: 600;">Tytuł Wpisu</label>
+                            <input type="text" id="post-title" required placeholder="Napisz przyciągający uwagę tytuł...">
                         </div>
                         <div class="form-group">
-                            <label>Treść</label>
-                            <textarea id="post-content" rows="6" required placeholder="Wpisz treść posta..."></textarea>
+                            <label style="color: var(--text-main); font-weight: 600;">Treść</label>
+                            <textarea id="post-content" rows="8" required placeholder="Co chcesz przekazać czytelnikom?"></textarea>
                         </div>
-                        <button type="submit" style="width: 100%;">Opublikuj w Bazie Danych</button>
+                        <button type="submit" style="width: 100%; margin-top: 1rem;">
+                            🚀 Opublikuj Post
+                        </button>
                     </form>
-                    <div id="status-msg" style="margin-top: 1rem; font-size: 0.9rem;"></div>
+                    <div id="status-msg" style="margin-top: 1.5rem; font-size: 0.95rem; text-align: center; font-weight: 600;"></div>
                 </div>
 
-                <div class="glass-card">
-                    <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
-                        <span>📋</span> Zarządzanie Postami
+                <div class="glass-card" style="padding: 2.5rem;">
+                    <h2 class="admin-card-title">
+                        <span class="admin-card-icon purple">📋</span> 
+                        <span class="gradient-text-silver">Zarządzanie Wpisami</span>
                     </h2>
-                    <div id="admin-posts-list" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div id="admin-posts-list" style="display: flex; flex-direction: column; gap: 1.2rem;">
+                        <!-- Ładowane z JS -->
                     </div>
                 </div>
 
-                <div class="glass-card">
-                    <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
-                        <span>👥</span> Uprawnienia Użytkowników
+                <div class="glass-card" style="padding: 2.5rem;">
+                    <h2 class="admin-card-title">
+                        <span class="admin-card-icon green">🛡️</span> 
+                        <span class="gradient-text-silver">Kontrola Użytkowników</span>
                     </h2>
-                    <div id="users-list" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div id="users-list" style="display: flex; flex-direction: column; gap: 1.2rem;">
+                        <!-- Ładowane z JS -->
                     </div>
                 </div>
             </main>

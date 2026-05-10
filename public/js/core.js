@@ -14,14 +14,13 @@ const API = {
                 }
             });
 
-            // Usunięto globalne przekierowanie na login.html
-            // Komponenty (np. profile.html) same decydują o przekierowaniu przy braku autoryzacji
-
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Błąd serwera');
             return data;
         } catch (err) {
-            console.error(`API Error [${url}]:`, err.message);
+            if (!options.silent) {
+                console.error(`API Error [${url}]:`, err.message);
+            }
             throw err;
         }
     },
@@ -88,10 +87,14 @@ const API = {
         });
     },
 
+    // Cicha próba sprawdzenia sesji — 401 dla gości jest oczekiwane i nie loguje błędu
     async me() {
         try {
-            return await this.fetch('/auth/me');
-        } catch (err) {
+            const res = await fetch('/auth/me', { credentials: 'same-origin' });
+            if (!res.ok) return null;
+            const data = await res.json();
+            return data;
+        } catch (_) {
             return null;
         }
     }
