@@ -3,240 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SECURE.BLOG – Nowoczesna platforma blogowa z naciskiem na bezpieczeństwo. Argon2id, CSP, HttpOnly sessions.">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/paywall.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <title>SECURE.BLOG | Cyber Security Lab</title>
+    <title>SECURE.BLOG</title>
 </head>
 <body>
     <nav>
-        <div class="logo" id="logo-link" style="cursor: pointer;">SECURE.BLOG</div>
-        <div id="nav-links" style="display: flex; align-items: center; gap: 20px;"></div>
+        <div class="logo" onclick="App.navigate('/')" style="cursor: pointer;">SECURE.BLOG</div>
+        <div id="nav-links" style="display: flex; align-items: center; gap: 20px;">
+            <!-- Renderowane przez app.js -->
+        </div>
     </nav>
 
-    <div class="container fade-in">
-
-        <!-- ─── Hero ─────────────────────────────────── -->
-        <section class="hero-section">
-            <div class="hero-glow"></div>
-
-            <div class="hero-badge">🛡️ Advanced Cyber Security Lab</div>
-
-            <h1 class="hero-title">
-                Nowy Wymiar<br>
-                <span class="gradient-text-primary">Bezpieczeństwa</span>
-            </h1>
-
-            <p class="hero-subtitle">
-                Zanurz się w eksperymentalnej platformie blogowej. Testuj, publikuj i poznaj nowoczesną
-                architekturę <strong>Security-First</strong> zabezpieczoną kryptografią Argon2id.
-            </p>
-
-            <div id="hero-actions" class="hero-actions"></div>
-        </section>
-
-        <!-- ─── Feature Cards ─────────────────────────── -->
-        <section class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon blue">🛡️</div>
-                <h3>Ochrona CSP & XSS</h3>
-                <p>Rygorystyczne polityki Content Security Policy oraz twarda filtracja danych chronią przed wstrzykiwaniem złośliwego kodu.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon purple">🔑</div>
-                <h3>Kryptografia Argon2id</h3>
-                <p>Zwycięzca konkursu PHC. Najwyższy standard zabezpieczania haseł z ekstremalną odpornością na łamanie.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon green">🍪</div>
-                <h3>Bezpieczne Sesje</h3>
-                <p>Odporne na kradzież przez JS ciasteczka HttpOnly powiązane z trwałym magazynem sesji na backendzie.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon orange">🔒</div>
-                <h3>API Token Auth</h3>
-                <p>Każdy użytkownik posiada unikalny Bearer Token do autoryzacji zewnętrznych zapytań API bez cookies.</p>
-            </div>
-        </section>
-
-        <!-- ─── Posts Section ─────────────────────────── -->
-        <section class="posts-section">
-            <div class="section-header">
-                <h2>Eksploruj Wpisy</h2>
-                <div class="section-divider"></div>
-            </div>
-            <div id="posts-container" class="posts-grid">
-                <div class="glass-card" style="text-align:center; color:var(--text-muted);">Ładowanie postów...</div>
-            </div>
-        </section>
-
+    <div id="app-root">
+        <!-- Renderowane przez app.js -->
     </div>
 
-    <script src="js/core.js"></script>
-    <script>
-        let currentUser = null;
-
-        // ─── Helpers ──────────────────────────────────────────
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.appendChild(document.createTextNode(String(str ?? '')));
-            return div.innerHTML;
-        }
-
-        // ─── Init ─────────────────────────────────────────────
-        async function init() {
-            document.getElementById('logo-link').addEventListener('click', () => { window.location.href = '/'; });
-
-            try {
-                const meData = await API.me();
-                currentUser = meData ? meData.user : null;
-            } catch (_) {
-                currentUser = null;
-            }
-
-            updateNav();
-            loadPosts();
-        }
-
-        // ─── Navigation ───────────────────────────────────────
-        function updateNav() {
-            const navLinks   = document.getElementById('nav-links');
-            const heroActions = document.getElementById('hero-actions');
-
-            if (currentUser) {
-                navLinks.innerHTML = `
-                    <div class="nav-user-widget">
-                        <span class="nav-user-greeting">Witaj,<span class="nav-user-name">${escapeHtml(currentUser.username)}</span></span>
-                        <span class="badge badge-${escapeHtml(currentUser.role)}" style="font-size:0.65rem;">${escapeHtml(currentUser.role)}</span>
-                    </div>
-                    <a href="/" class="nav-link active">Home</a>
-                    <a href="/profile.html" class="nav-link">Mój Profil</a>
-                    ${currentUser.role === 'admin' ? '<a href="/admin.html" class="nav-link">Panel Admina</a>' : ''}
-                    <button class="btn-logout" id="btn-logout">Wyloguj</button>
-                `;
-                document.getElementById('btn-logout').addEventListener('click', () => API.logout());
-
-                heroActions.innerHTML = `
-                    <button id="btn-profile" class="hero-btn-primary">Przejdź do Profilu</button>
-                    <button id="btn-scroll" class="hero-btn-secondary">Czytaj Wpisy ↓</button>
-                `;
-            } else {
-                navLinks.innerHTML = `
-                    <a href="/login.html" class="nav-link">Logowanie</a>
-                    <a href="/register.html" class="btn-primary-small">Dołącz →</a>
-                `;
-
-                heroActions.innerHTML = `
-                    <button id="btn-register" class="hero-btn-primary">Rozpocznij Teraz</button>
-                    <button id="btn-scroll" class="hero-btn-secondary">Przeglądaj jako Gość ↓</button>
-                `;
-            }
-
-            document.getElementById('btn-profile')?.addEventListener('click', () => { window.location.href = '/profile.html'; });
-            document.getElementById('btn-register')?.addEventListener('click', () => { window.location.href = '/register.html'; });
-            document.getElementById('btn-scroll')?.addEventListener('click', () => {
-                document.getElementById('posts-container').scrollIntoView({ behavior: 'smooth' });
-            });
-        }
-
-        // ─── Posts ────────────────────────────────────────────
-        async function loadPosts() {
-            const container = document.getElementById('posts-container');
-            try {
-                const posts = await API.getPosts();
-                container.innerHTML = '';
-
-                if (!posts || posts.length === 0) {
-                    container.innerHTML = '<div class="glass-card" style="grid-column:1/-1; text-align:center; color:var(--text-muted);">Brak postów do wyświetlenia.</div>';
-                    return;
-                }
-
-                for (const post of posts) {
-                    const card = document.createElement('article');
-                    card.className = 'glass-card post-card fade-in';
-                    card.innerHTML = `
-                        <div class="post-meta">${escapeHtml(new Date(post.created_at).toLocaleDateString('pl-PL'))} • ${escapeHtml(post.author)}</div>
-                        <h2 class="post-title">${escapeHtml(post.title)}</h2>
-                        <p class="post-excerpt">${escapeHtml(post.content)}</p>
-
-                        <div class="comments-section">
-                            <h4 class="comments-label">💬 Komentarze</h4>
-                            <div id="comments-${post.id}" class="comments-list">
-                                <p class="comments-loading">Ładowanie...</p>
-                            </div>
-                            ${currentUser
-                                ? `<div class="comment-form">
-                                       <input type="text" id="input-${post.id}" placeholder="Napisz komentarz...">
-                                       <button class="comment-submit-btn" data-post="${post.id}">Wyślij</button>
-                                   </div>`
-                                : `<p class="comments-login-prompt">
-                                       <a href="login.html" style="color:var(--primary);">Zaloguj się</a>, aby dodać komentarz.
-                                   </p>`
-                            }
-                        </div>
-                    `;
-
-                    card.querySelector('.comment-submit-btn')?.addEventListener('click', (e) => {
-                        postComment(e.target.dataset.post);
-                    });
-
-                    container.appendChild(card);
-                    loadComments(post.id);
-                }
-            } catch (err) {
-                container.innerHTML = `<div class="glass-card" style="color:var(--danger); text-align:center;">❌ Błąd ładowania postów.</div>`;
-                console.error('loadPosts error:', err);
-            }
-        }
-
-        // ─── Comments ─────────────────────────────────────────
-        async function loadComments(postId) {
-            const container = document.getElementById(`comments-${postId}`);
-            if (!container) return;
-
-            try {
-                const comments = await API.getComments(postId);
-                container.innerHTML = '';
-
-                if (comments.length === 0) {
-                    container.innerHTML = '<p class="comments-empty">Brak komentarzy. Bądź pierwszy!</p>';
-                    return;
-                }
-
-                comments.forEach(comment => {
-                    const div = document.createElement('div');
-                    div.className = 'comment-item';
-                    div.innerHTML = `
-                        <div class="comment-header">
-                            <span class="comment-author">${escapeHtml(comment.username)}</span>
-                            <span class="comment-date">${new Date(comment.created_at).toLocaleDateString('pl-PL')}</span>
-                        </div>
-                        <div class="comment-content">${escapeHtml(comment.content)}</div>
-                    `;
-                    container.appendChild(div);
-                });
-            } catch (err) {
-                if (container) container.innerHTML = '<p style="color:var(--danger); font-size:0.8rem;">Błąd ładowania komentarzy.</p>';
-            }
-        }
-
-        async function postComment(postId) {
-            const input   = document.getElementById(`input-${postId}`);
-            const content = input.value.trim();
-            if (!content) return;
-
-            try {
-                await API.addComment(Number(postId), content);
-                input.value = '';
-                loadComments(postId);
-            } catch (err) {
-                alert('Błąd: ' + err.message);
-            }
-        }
-
-        window.onload = init;
-    </script>
+    <script src="/js/core.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/controllers/home.js"></script>
+    <script src="/js/controllers/paywall.js"></script>
+    <script src="/js/controllers/admin.js"></script>
+    <script src="/js/controllers/auth.js"></script>
+    <script src="/js/controllers/profile.js"></script>
 </body>
 </html>

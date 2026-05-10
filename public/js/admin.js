@@ -28,13 +28,14 @@ document.getElementById('add-post-form').onsubmit = async (e) => {
     const msg  = document.getElementById('status-msg');
     const title   = document.getElementById('post-title').value.trim();
     const content = document.getElementById('post-content').value.trim();
+    const isPremium = document.getElementById('post-premium') ? document.getElementById('post-premium').checked : false;
 
     btn.disabled = true;
     btn.innerText = 'Publikowanie...';
     msg.innerText = '';
 
     try {
-        await API.addPost(title, content);
+        await API.addPost(title, content, isPremium);
         msg.style.color = 'var(--accent)';
         msg.innerText = '✨ Post opublikowany pomyślnie!';
         e.target.reset();
@@ -114,8 +115,7 @@ async function loadUsers() {
         const currentUsername = localStorage.getItem('username');
 
         users.forEach(user => {
-            const isSelf     = user.username === currentUsername;
-            const targetRole = user.role === 'admin' ? 'user' : 'admin';
+            const isSelf = user.username === currentUsername;
 
             const div = document.createElement('div');
             div.className = 'admin-list-item fade-in';
@@ -124,16 +124,25 @@ async function loadUsers() {
                     <strong style="color:var(--text-main);">${escapeHtml(user.username)}</strong>
                     <span class="badge badge-${escapeHtml(user.role)}" style="font-size: 0.6rem;">${escapeHtml(user.role)}</span>
                 </div>
-                <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
                     ${isSelf
                         ? '<span style="font-size:0.7rem; color:var(--accent); font-weight:700; opacity:0.8;">TO TY</span>'
-                        : `<button class="admin-list-btn">Zmień na ${escapeHtml(targetRole === 'admin' ? 'Admin' : 'User')}</button>`
+                        : `
+                        <select class="role-select" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--glass-border); border-radius: 8px; padding: 4px 8px; outline: none; cursor: pointer; font-size: 0.75rem;">
+                            <option value="user" ${user.role === 'user' ? 'selected' : ''} style="background: #020617;">User</option>
+                            <option value="premium" ${user.role === 'premium' ? 'selected' : ''} style="background: #020617;">Premium</option>
+                            <option value="admin" ${user.role === 'admin' ? 'selected' : ''} style="background: #020617;">Admin</option>
+                        </select>
+                        <button class="admin-list-btn">Zapisz</button>
+                        `
                     }
                 </div>
             `;
 
             if (!isSelf) {
-                div.querySelector('button').addEventListener('click', () => changeRole(user.id, targetRole));
+                const select = div.querySelector('.role-select');
+                const btn = div.querySelector('button');
+                btn.addEventListener('click', () => changeRole(user.id, select.value));
             }
 
             list.appendChild(div);

@@ -65,10 +65,10 @@ const API = {
         return await this.fetch('/api/posts');
     },
 
-    async addPost(title, content) {
+    async addPost(title, content, isPremium = false) {
         return await this.fetch('/api/posts', {
             method: 'POST',
-            body: JSON.stringify({ title, content })
+            body: JSON.stringify({ title, content, is_premium: isPremium })
         });
     },
 

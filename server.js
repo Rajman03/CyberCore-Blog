@@ -5,6 +5,8 @@ const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
+const hpp = require('hpp');
+const { sanitizePayload } = require('./middleware/sanitize');
 require('dotenv').config();
 
 const { initDB } = require('./config/db');
@@ -49,6 +51,10 @@ app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 app.use(cookieParser(process.env.SECRET_KEY));
 app.use(cors({ origin: true, credentials: true }));
 
+// 5. Data Sanitization & HTTP Parameter Pollution
+app.use(sanitizePayload);
+app.use(hpp());
+
 // Sensitive File Protection (MUST be before static files)
 app.use((req, res, next) => {
     const url = req.url.toLowerCase();
@@ -59,7 +65,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// 5. Static Files
+// 6. Static Files
 app.use(express.static('public'));
 
 // Favicon Fix
@@ -71,6 +77,7 @@ const postRoutes = require('./routes/posts');
 const commentRoutes = require('./routes/comments');
 const profileRoutes = require('./routes/profile');
 const userRoutes = require('./routes/users');
+const paywallRoutes = require('./routes/paywall');
 
 // --- Route Mounting ---
 app.use('/auth', authRoutes);
@@ -78,6 +85,12 @@ app.use('/api/posts', postRoutes);
 app.use('/api', commentRoutes); 
 app.use('/api/profile', profileRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/paywall', paywallRoutes);
+
+// --- SPA Catch-all ---
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // --- Global Error Handler ---
 app.use((err, req, res, next) => {

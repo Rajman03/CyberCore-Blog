@@ -10,14 +10,26 @@ router.get('/', requireAuth, isAdmin, (req, res) => {
     });
 });
 
-const ALLOWED_ROLES = ['admin', 'user'];
+const ALLOWED_ROLES = ['admin', 'user', 'premium'];
 
 router.patch('/:id/role', requireAuth, isAdmin, (req, res) => {
     const { role } = req.body;
     if (!ALLOWED_ROLES.includes(role)) {
-        return res.status(400).json({ error: 'Invalid role. Must be "admin" or "user".' });
+        return res.status(400).json({ error: 'Invalid role. Must be "admin", "premium" or "user".' });
     }
-    db.run('UPDATE users SET role = ? WHERE id = ?', [role, req.params.id], (err) => {
+
+    let sql = 'UPDATE users SET role = ? WHERE id = ?';
+    let params = [role, req.params.id];
+    
+    if (role === 'premium') {
+        sql = 'UPDATE users SET role = ?, subscription_tier = ? WHERE id = ?';
+        params = [role, 'premium', req.params.id];
+    } else if (role === 'user') {
+        sql = 'UPDATE users SET role = ?, subscription_tier = ? WHERE id = ?';
+        params = [role, 'free', req.params.id];
+    }
+
+    db.run(sql, params, (err) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.json({ message: 'Role updated' });
     });

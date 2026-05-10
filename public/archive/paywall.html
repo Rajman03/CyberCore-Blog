@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SECURE.BLOG | Strefa Premium</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .premium-banner {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .premium-banner::before {
+            content: '⭐';
+            position: absolute;
+            font-size: 8rem;
+            opacity: 0.05;
+            top: -20px;
+            right: 10px;
+        }
+        .article-card {
+            position: relative;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+        .article-card:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
+        }
+        .article-locked .blur-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(to top, var(--bg-dark) 20%, transparent);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 2rem;
+            z-index: 10;
+        }
+        .lock-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .badge-premium {
+            background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+            color: #000;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: var(--bg-dark);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            padding: 2rem;
+            position: relative;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .close-btn {
+            position: absolute;
+            top: 1rem; right: 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: none;
+            padding: 0;
+            width: auto;
+            height: auto;
+        }
+        .close-btn:hover { background: transparent; color: white; transform: none; box-shadow: none;}
+        .subscription-plans {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .plan-card {
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .plan-card:hover, .plan-card.selected {
+            border-color: var(--accent);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        .plan-price { font-size: 1.8rem; font-weight: 800; color: var(--text-main); margin: 1rem 0; }
+        
+        .article-view-content { white-space: pre-wrap; font-size: 1rem; line-height: 1.6; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo" id="logo-link" style="cursor: pointer;">SECURE.BLOG</div>
+        <div id="nav-links" style="display: flex; align-items: center; gap: 20px;"></div>
+    </nav>
+
+    <div class="container fade-in">
+        <div class="premium-banner" id="premium-status">
+            <h1 style="margin-bottom: 0.5rem;" class="gradient-text-green">Strefa Premium</h1>
+            <p style="color: var(--text-muted);">Najwyższej jakości techniczne artykuły dla ekspertów Cyber Security.</p>
+            <div style="margin-top: 1.5rem;" id="subscribe-cta">
+                <button class="btn-primary-small" onclick="openSubscribeModal()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">⭐ Zostań Premium</button>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <h2>Ekskluzywne Materiały</h2>
+            <div class="section-divider"></div>
+        </div>
+
+        <div class="posts-grid" id="articles-container">
+            <div class="glass-card" style="text-align:center; color:var(--text-muted);">Ładowanie artykułów...</div>
+        </div>
+    </div>
+
+    <!-- Subscribe Modal -->
+    <div class="modal" id="subscribe-modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModals()">&times;</button>
+            <h2 style="margin-bottom: 0.5rem; text-align: center;">Wybierz Plan Premium</h2>
+            <p style="color: var(--text-muted); text-align: center; margin-bottom: 1.5rem;">Odblokuj dostęp do zaawansowanych poradników i analiz podatności.</p>
+            
+            <div class="subscription-plans">
+                <div class="plan-card selected" id="plan-monthly" onclick="selectPlan('monthly')">
+                    <h3>Miesięczny</h3>
+                    <div class="plan-price">29 PLN</div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">Odwołaj w każdej chwili</p>
+                </div>
+                <div class="plan-card" id="plan-yearly" onclick="selectPlan('yearly')">
+                    <h3>Roczny <span class="badge-premium" style="font-size: 0.5rem;">Oszczędzasz 20%</span></h3>
+                    <div class="plan-price">199 PLN</div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">Rozliczane rocznie</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 2rem; display: flex; gap: 10px;">
+                <button id="btn-confirm-sub" onclick="confirmSubscription()" style="flex: 1; background: var(--glass); color: white; border: 1px solid var(--glass-border);">Testowe API Płatności</button>
+                <button id="btn-stripe-sub" onclick="stripeCheckout()" style="flex: 1; background: #635bff; color: white; box-shadow: 0 4px 15px rgba(99, 91, 255, 0.4);">🔒 Płać przez Stripe</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Article View Modal -->
+    <div class="modal" id="article-modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <button class="close-btn" onclick="closeModals()">&times;</button>
+            <h2 id="article-view-title" style="margin-bottom: 1.5rem;" class="gradient-text-primary">Tytuł</h2>
+            <div id="article-view-body" class="article-view-content">Treść...</div>
+            <div id="article-view-locked-cta" style="display: none; text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--glass-border);">
+                <div class="lock-icon">🔒</div>
+                <h3>Zablokowana Treść Premium</h3>
+                <p style="color: var(--text-muted); margin: 1rem 0;">Wykup dostęp Premium, aby czytać dalej.</p>
+                <button onclick="openSubscribeModal()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Subskrybuj</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/core.js"></script>
+    <script>
+        let currentUser = null;
+        let selectedPlan = 'monthly';
+        let isPremiumUser = false;
+        let isAdminBypass = false;
+
+        async function init() {
+            document.getElementById('logo-link').addEventListener('click', () => { window.location.href = '/'; });
+            
+            try {
+                const meData = await API.me();
+                currentUser = meData ? meData.user : null;
+                
+                if (currentUser) {
+                    // Sprawdzanie czy użytkownik wrócił ze Stripe checkout
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('simulated_stripe_checkout') === 'true') {
+                        await API.fetch('/api/paywall/subscribe', {
+                            method: 'POST',
+                            body: JSON.stringify({ plan: urlParams.get('plan') })
+                        });
+                        alert("Pomyślnie powrócono ze Stripe Checkout i aktywowano konto!");
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+
+                    const statusRes = await API.fetch('/api/paywall/status');
+                    isPremiumUser = statusRes.tier === 'premium';
+                    isAdminBypass = statusRes.isAdmin === true;
+                }
+            } catch (_) {}
+
+            updateNav();
+            updateBanner();
+            loadArticles();
+        }
+
+        function updateNav() {
+            const navLinks = document.getElementById('nav-links');
+            if (currentUser) {
+                navLinks.innerHTML = `
+                    <div class="nav-user-widget">
+                        <span class="nav-user-greeting">Witaj,<span class="nav-user-name">${escapeHtml(currentUser.username)}</span></span>
+                        <span class="badge badge-${escapeHtml(currentUser.role)}" style="font-size:0.65rem;">${escapeHtml(currentUser.role)}</span>
+                    </div>
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/paywall.html" class="nav-link active">Premium</a>
+                    <a href="/profile.html" class="nav-link">Profil</a>
+                    <button class="btn-logout" onclick="API.logout()">Wyloguj</button>
+                `;
+            } else {
+                navLinks.innerHTML = `
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/login.html" class="nav-link">Logowanie</a>
+                    <a href="/register.html" class="btn-primary-small">Dołącz →</a>
+                `;
+            }
+        }
+
+        function updateBanner() {
+            const cta = document.getElementById('subscribe-cta');
+            if (!currentUser) {
+                cta.innerHTML = '<p style="color: var(--text-muted);"><a href="/login.html" style="color: var(--accent);">Zaloguj się</a> aby uzyskać dostęp.</p>';
+            } else if (isAdminBypass) {
+                cta.innerHTML = `
+                    <div style="display:inline-flex; align-items:center; gap:10px; background: rgba(99, 102, 241, 0.2); padding: 10px 20px; border-radius: 30px; border: 1px solid rgba(99, 102, 241, 0.4);">
+                        <span style="font-size: 1.2rem;">🛠️</span>
+                        <span style="font-weight: 700; color: #818cf8;">Jesteś Administratorem. Paywall jest domyślnie zdjęty.</span>
+                    </div>
+                `;
+            } else if (isPremiumUser) {
+                cta.innerHTML = `
+                    <div style="display:inline-flex; align-items:center; gap:10px; background: rgba(16, 185, 129, 0.2); padding: 10px 20px; border-radius: 30px; border: 1px solid rgba(16, 185, 129, 0.4);">
+                        <span style="font-size: 1.2rem;">✨</span>
+                        <span style="font-weight: 700; color: #10b981;">Twój status Premium jest aktywny</span>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="secondary" onclick="cancelSubscription()" style="font-size: 0.8rem; padding: 6px 16px;">Anuluj Subskrypcję (Test)</button>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadArticles() {
+            const container = document.getElementById('articles-container');
+            try {
+                const res = await API.fetch('/api/paywall/articles');
+                isPremiumUser = res.isPremium;
+                
+                container.innerHTML = '';
+                res.articles.forEach(article => {
+                    const card = document.createElement('div');
+                    card.className = `article-card ${article.locked ? 'article-locked' : ''}`;
+                    
+                    let badgeHtml = '';
+                    if (article.premium) badgeHtml += '<span class="badge-premium">Premium</span> ';
+                    if (article.badge) badgeHtml += `<span class="badge badge-user" style="background: rgba(99, 102, 241, 0.2); color: var(--primary);">${escapeHtml(article.badge)}</span>`;
+
+                    card.innerHTML = `
+                        <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>${badgeHtml}</div>
+                            <span style="color: var(--text-muted); font-size: 0.8rem;">⏱ ${escapeHtml(article.readTime)}</span>
+                        </div>
+                        <h3 style="font-size: 1.2rem; margin-bottom: 0.8rem;">${escapeHtml(article.title)}</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.5rem;">${escapeHtml(article.excerpt)}</p>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">📂 ${escapeHtml(article.category)}</span>
+                            <button onclick="readArticle(${article.id})" class="secondary" style="padding: 6px 14px; font-size: 0.8rem;">Czytaj →</button>
+                        </div>
+                        
+                        ${article.locked ? `
+                            <div class="blur-overlay">
+                                <div style="text-align: center;">
+                                    <div class="lock-icon">🔒</div>
+                                    <button onclick="openSubscribeModal()" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000; font-weight: 800; border: none; padding: 6px 16px; font-size: 0.8rem;">Odblokuj</button>
+                                </div>
+                            </div>
+                        ` : ''}
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (err) {
+                container.innerHTML = '<div style="color: var(--danger);">Błąd ładowania artykułów.</div>';
+            }
+        }
+
+        async function readArticle(id) {
+            try {
+                const res = await API.fetch(`/api/paywall/article/${id}`);
+                showArticle(res.article.title, res.article.content, false);
+            } catch (err) {
+                if (err.message === 'Dostęp wymaga subskrypcji Premium') {
+                    // Mamy błąd 403, ale z podglądem
+                    API.fetch(`/api/paywall/article/${id}`, { silent: true }).catch(resErr => {
+                        // Hack żeby wydobyć odpowiedź JSON z błędu gdy fetch() rzuca Error w core.js
+                        // W core.js niestety tracimy payload z body przy błędzie, ale użyjemy normalnego fetcha tu
+                    });
+                    
+                    // Bezpośredni fetch omijający rzucanie błędu w core.js
+                    const rawRes = await fetch(`/api/paywall/article/${id}`, { credentials: 'same-origin' });
+                    const data = await rawRes.json();
+                    
+                    if (data.requiresPremium) {
+                        showArticle("Zablokowany Artykuł", data.preview, true);
+                    }
+                } else if(err.message === 'Session required' || err.message === 'Invalid session' || err.message === 'Invalid API Token') {
+                    alert("Musisz być zalogowany aby to przeczytać.");
+                    window.location.href = '/login.html';
+                } else {
+                    alert("Błąd: " + err.message);
+                }
+            }
+        }
+
+        function showArticle(title, content, isLocked) {
+            document.getElementById('article-view-title').innerText = title;
+            document.getElementById('article-view-body').innerText = content;
+            document.getElementById('article-view-locked-cta').style.display = isLocked ? 'block' : 'none';
+            document.getElementById('article-modal').style.display = 'flex';
+        }
+
+        function openSubscribeModal() {
+            if (!currentUser) {
+                window.location.href = '/login.html';
+                return;
+            }
+            document.getElementById('subscribe-modal').style.display = 'flex';
+        }
+
+        function closeModals() {
+            document.getElementById('subscribe-modal').style.display = 'none';
+            document.getElementById('article-modal').style.display = 'none';
+        }
+
+        function selectPlan(plan) {
+            selectedPlan = plan;
+            document.getElementById('plan-monthly').classList.remove('selected');
+            document.getElementById('plan-yearly').classList.remove('selected');
+            document.getElementById(`plan-${plan}`).classList.add('selected');
+        }
+
+        async function confirmSubscription() {
+            const btn = document.getElementById('btn-confirm-sub');
+            btn.innerText = 'Przetwarzanie...';
+            btn.disabled = true;
+
+            try {
+                const res = await API.fetch('/api/paywall/subscribe', {
+                    method: 'POST',
+                    body: JSON.stringify({ plan: selectedPlan })
+                });
+                alert(res.message);
+                closeModals();
+                init(); // Przeładuj stan
+            } catch (err) {
+                alert("Błąd płatności: " + err.message);
+            } finally {
+                btn.innerText = 'Testowe API Płatności';
+                btn.disabled = false;
+            }
+        }
+
+        async function stripeCheckout() {
+            const btn = document.getElementById('btn-stripe-sub');
+            btn.innerText = 'Przekierowywanie...';
+            btn.disabled = true;
+
+            try {
+                const res = await API.fetch('/api/paywall/create-checkout-session', {
+                    method: 'POST',
+                    body: JSON.stringify({ plan: selectedPlan })
+                });
+                // Przekieruj uzytkownika do checkout URL (np. Stripe Checkout Page)
+                window.location.href = res.url;
+            } catch (err) {
+                alert("Błąd inicjalizacji Stripe: " + err.message);
+                btn.innerText = '🔒 Płać przez Stripe';
+                btn.disabled = false;
+            }
+        }
+
+        async function cancelSubscription() {
+            if (!confirm('Na pewno chcesz anulować premium?')) return;
+            try {
+                await API.fetch('/api/paywall/unsubscribe', { method: 'POST' });
+                alert('Subskrypcja anulowana.');
+                init();
+            } catch (err) {
+                alert('Błąd: ' + err.message);
+            }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(String(str ?? '')));
+            return div.innerHTML;
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

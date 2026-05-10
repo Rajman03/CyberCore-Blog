@@ -28,7 +28,8 @@ const authSchemas = {
 const postSchemas = {
     create: Joi.object({
         title: Joi.string().min(5).max(100).required(),
-        content: Joi.string().min(10).max(5000).required()
+        content: Joi.string().min(10).max(5000).required(),
+        is_premium: Joi.boolean().optional()
     })
 };
 
