@@ -107,14 +107,14 @@
         function updateNav() {
             const navLinks = document.getElementById('nav-links');
             navLinks.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 12px; margin-right: 10px; padding-right: 20px; border-right: 1px solid var(--glass-border);">
-                    <span style="opacity:0.6; font-size:0.85rem;">Witaj, <strong style="color: var(--accent);">${currentUser.username}</strong></span>
-                    <span class="badge badge-${currentUser.role}" style="font-size: 0.6rem;">${currentUser.role}</span>
+                <div class="nav-user-widget">
+                    <span class="nav-user-greeting">Witaj,<span class="nav-user-name">${currentUser.username}</span></span>
+                    <span class="badge badge-${currentUser.role}" style="font-size: 0.65rem;">${currentUser.role}</span>
                 </div>
                 <a href="/" class="nav-link">Home</a>
-                <a href="/profile.html" class="nav-link">Mój Profil</a>
-                ${currentUser.role === 'admin' ? '<a href="/admin.html" class="nav-link" style="color: var(--primary); font-weight: 800;">Panel Admina</a>' : ''}
-                <button onclick="logout()" class="secondary" style="padding: 8px 16px; font-size: 0.8rem; border-color: rgba(244, 63, 94, 0.3); color: var(--danger);">Wyloguj</button>
+                <a href="/profile.html" class="nav-link active">Mój Profil</a>
+                ${currentUser.role === 'admin' ? '<a href="/admin.html" class="nav-link">Panel Admina</a>' : ''}
+                <button onclick="logout()" class="btn-logout">Wyloguj</button>
             `;
         }
 

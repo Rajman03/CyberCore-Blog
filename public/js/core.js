@@ -14,10 +14,8 @@ const API = {
                 }
             });
 
-            if (res.status === 401 && !url.includes('/auth/login')) {
-                window.location.href = '/login.html';
-                return null;
-            }
+            // Usunięto globalne przekierowanie na login.html
+            // Komponenty (np. profile.html) same decydują o przekierowaniu przy braku autoryzacji
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Błąd serwera');

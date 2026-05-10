@@ -18,14 +18,52 @@
     </nav>
 
     <div class="container fade-in">
-        <header style="margin-bottom: 5rem; text-align: center;">
-            <h1 style="font-size: 4rem; margin-bottom: 1.5rem; letter-spacing: -2px; line-height: 1.1;">
-                Odkryj <span style="background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Bezpieczny</span> Kontent
+        <!-- Hero Section -->
+        <section style="text-align: center; margin: 2rem 0 6rem; position: relative;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 60%); z-index: -1; pointer-events: none;"></div>
+            
+            <div style="display: inline-block; padding: 8px 20px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 30px; font-size: 0.85rem; font-weight: 700; color: var(--primary); margin-bottom: 2rem; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);">
+                🛡️ Advanced Cyber Security Lab
+            </div>
+            
+            <h1 style="font-size: clamp(3rem, 5vw, 5rem); margin-bottom: 1.5rem; letter-spacing: -2px; line-height: 1.1; font-weight: 800;">
+                Nowy Wymiar <br>
+                <span style="background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Bezpieczeństwa</span>
             </h1>
-            <p style="color: var(--text-muted); font-size: 1.25rem; max-width: 600px; margin: 0 auto; line-height: 1.6;">
-                Profesjonalny poligon doświadczalny bezpieczeństwa: Node.js, SQLite3 oraz zaawansowana kryptografia Argon2id.
+            
+            <p style="color: var(--text-muted); font-size: 1.25rem; max-width: 650px; margin: 0 auto 3rem; line-height: 1.7;">
+                Zanurz się w eksperymentalnej platformie blogowej. Testuj, publikuj i poznaj nowoczesną architekturę <strong>Security-First</strong> zabezpieczoną kryptografią Argon2id.
             </p>
-        </header>
+            
+            <div id="hero-actions" style="display: flex; gap: 1.5rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+                <!-- Wypełniane przez JS -->
+            </div>
+        </section>
+
+        <!-- Feature Cards -->
+        <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 6rem;">
+            <div class="glass-card" style="padding: 2.5rem 2rem; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                <div style="width: 70px; height: 70px; background: rgba(99,102,241,0.1); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(99,102,241,0.2);">🛡️</div>
+                <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Ochrona CSP & XSS</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">Rygorystyczne polityki Content Security Policy oraz twarda filtracja danych chronią przed wstrzykiwaniem złośliwego kodu.</p>
+            </div>
+            <div class="glass-card" style="padding: 2.5rem 2rem; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                <div style="width: 70px; height: 70px; background: rgba(192,132,252,0.1); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(192,132,252,0.2);">🔑</div>
+                <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Kryptografia Argon2id</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">Zwycięzca konkursu PHC. Najwyższy standard zabezpieczania haseł z ekstremalną odpornością na łamanie.</p>
+            </div>
+            <div class="glass-card" style="padding: 2.5rem 2rem; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                <div style="width: 70px; height: 70px; background: rgba(16,185,129,0.1); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(16,185,129,0.2);">🍪</div>
+                <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Bezpieczne Sesje</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">Odporne na kradzież przez JS ciasteczka HttpOnly powiązane z trwałym magazynem sesji na backendzie.</p>
+            </div>
+        </section>
+
+        <!-- Blog Section Title -->
+        <div style="text-align: center; margin-bottom: 4rem;">
+            <h2 style="font-size: 2.5rem; margin-bottom: 1rem; letter-spacing: -1px;">Eksploruj Wpisy</h2>
+            <div style="width: 80px; height: 4px; background: linear-gradient(90deg, var(--primary), #c084fc); margin: 0 auto; border-radius: 2px;"></div>
+        </div>
 
         <section id="posts-container" class="posts-grid">
             <div class="glass-card" style="text-align: center;">Ładowanie postów...</div>
@@ -51,22 +89,38 @@
 
         function updateNav() {
             const navLinks = document.getElementById('nav-links');
+            const heroActions = document.getElementById('hero-actions');
+            
             if (currentUser) {
                 navLinks.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 12px; margin-right: 10px; padding-right: 20px; border-right: 1px solid var(--glass-border);">
-                        <span style="opacity:0.6; font-size:0.85rem;">Witaj, <strong style="color: var(--accent);">${currentUser.username}</strong></span>
-                        <span class="badge badge-${currentUser.role}" style="font-size: 0.6rem;">${currentUser.role}</span>
+                    <div class="nav-user-widget">
+                        <span class="nav-user-greeting">Witaj,<span class="nav-user-name">${currentUser.username}</span></span>
+                        <span class="badge badge-${currentUser.role}" style="font-size: 0.65rem;">${currentUser.role}</span>
                     </div>
-                    <a href="/" class="nav-link">Home</a>
+                    <a href="/" class="nav-link active">Home</a>
                     <a href="/profile.html" class="nav-link">Mój Profil</a>
-                    ${currentUser.role === 'admin' ? '<a href="/admin.html" class="nav-link" style="color: var(--primary); font-weight: 800;">Panel Admina</a>' : ''}
-                    <button onclick="logout()" class="secondary" style="padding: 8px 16px; font-size: 0.8rem; border-color: rgba(244, 63, 94, 0.3); color: var(--danger);">Wyloguj</button>
+                    ${currentUser.role === 'admin' ? '<a href="/admin.html" class="nav-link">Panel Admina</a>' : ''}
+                    <button onclick="logout()" class="btn-logout">Wyloguj</button>
                 `;
+                
+                if (heroActions) {
+                    heroActions.innerHTML = `
+                        <button onclick="window.location.href='/profile.html'" style="padding: 1.2rem 3rem; font-size: 1.1rem; border-radius: 30px; border: 1px solid rgba(255,255,255,0.2);">Przejdź do Profilu</button>
+                        <button onclick="document.getElementById('posts-container').scrollIntoView({behavior: 'smooth'})" class="secondary" style="padding: 1.2rem 3rem; font-size: 1.1rem; border-radius: 30px;">Czytaj Wpisy</button>
+                    `;
+                }
             } else {
                 navLinks.innerHTML = `
                     <a href="/login.html" class="nav-link">Logowanie</a>
-                    <a href="/register.html" class="btn-primary-small" style="text-decoration: none;">Dołącz do nas</a>
+                    <a href="/register.html" class="btn-primary-small" style="border-radius: 30px; padding: 8px 20px;">Dołącz do nas</a>
                 `;
+                
+                if (heroActions) {
+                    heroActions.innerHTML = `
+                        <button onclick="window.location.href='/register.html'" style="padding: 1.2rem 3rem; font-size: 1.1rem; border-radius: 30px; border: 1px solid rgba(255,255,255,0.2);">Rozpocznij Teraz</button>
+                        <button onclick="document.getElementById('posts-container').scrollIntoView({behavior: 'smooth'})" class="secondary" style="padding: 1.2rem 3rem; font-size: 1.1rem; border-radius: 30px;">Przeglądaj jako Gość</button>
+                    `;
+                }
             }
         }
 

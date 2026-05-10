@@ -26,6 +26,7 @@ app.use(helmet({
         directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            scriptSrcAttr: ["'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:"],
@@ -37,7 +38,7 @@ app.use(helmet({
 // 3. Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, 
-    max: 100, 
+    max: 1000, // Zwiększone z 100 na 1000 dla środowiska deweloperskiego
     message: "Zwolnij! Za dużo zapytań."
 });
 app.use(limiter);
