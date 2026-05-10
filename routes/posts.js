@@ -8,9 +8,13 @@ const { validate, postSchemas } = require('../middleware/validation');
 // GET all posts (public)
 router.get('/', loadUserOptional, (req, res) => {
     const isPremium = req.user?.subscription_tier === 'premium' || req.user?.role === 'admin' || req.user?.role === 'premium';
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit) || 20);
+    const offset = (page - 1) * limit;
 
     db.all(
-        'SELECT posts.*, users.username as author FROM posts JOIN users ON posts.author_id = users.id ORDER BY created_at DESC',
+        'SELECT posts.*, users.username as author FROM posts JOIN users ON posts.author_id = users.id ORDER BY created_at DESC LIMIT ? OFFSET ?',
+        [limit, offset],
         (err, rows) => {
             if (err) return res.status(500).json({ error: 'Database error' });
             

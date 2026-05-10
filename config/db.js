@@ -3,24 +3,55 @@ const path = require('path');
 const argon2 = require('argon2');
 const crypto = require('crypto');
 
-const db = new sqlite3.Database(path.join(__dirname, '../db/blog.db'), (err) => {
-    if (err) console.error('❌ DB Error:', err.message);
-    else console.log('🛡️  Secure SQLite Engine: ONLINE');
-});
+/**
+ * Database Configuration
+ * Supports both SQLite (default) and Supabase (PostgreSQL)
+ */
 
-const initDB = () => {
-    db.serialize(() => {
+const DATABASE_TYPE = process.env.DATABASE_TYPE || 'sqlite';
+
+let db;
+let adapter; // For Supabase adapter
+
+// Initialize based on database type
+if (DATABASE_TYPE === 'supabase') {
+    const { supabase, SupabaseAdapter } = require('./supabase');
+    adapter = new SupabaseAdapter(supabase);
+    console.log('🌐 Using Supabase (PostgreSQL) database');
+    db = null; // SQLite not used
+} else {
+    // SQLite initialization
+    db = new sqlite3.Database(path.join(__dirname, '../db/blog.db'), (err) => {
+        if (err) console.error('❌ DB Error:', err.message);
+        else {
+            console.log('🛡️  Secure SQLite Engine: ONLINE');
+            // Enable WAL mode for better concurrency and performance
+            db.run('PRAGMA journal_mode = WAL');
+            db.run('PRAGMA foreign_keys = ON');
+        }
+    });
+}
+
+const initDB = async () => {
+    if (DATABASE_TYPE === 'supabase') {
+        const { initSupabaseDB } = require('./supabase');
+        await initSupabaseDB();
+    } else {
+        // SQLite initialization
+        db.serialize(() => {
         db.run(`CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             role TEXT DEFAULT 'user',
+            subscription_tier TEXT DEFAULT 'free',
             reset_token TEXT,
             reset_expires INTEGER,
             failed_login_attempts INTEGER DEFAULT 0,
             lockout_until INTEGER DEFAULT NULL,
-            api_token TEXT
+            api_token TEXT UNIQUE,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
         db.run(`CREATE TABLE IF NOT EXISTS sessions (
@@ -38,8 +69,10 @@ const initDB = () => {
             title TEXT NOT NULL,
             content TEXT NOT NULL,
             author_id TEXT NOT NULL,
+            is_premium INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (author_id) REFERENCES users(id)
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
         db.run(`CREATE TABLE IF NOT EXISTS comments (
@@ -67,21 +100,36 @@ const initDB = () => {
         // Seed Admin
         db.get('SELECT id FROM users WHERE username = ?', ['admin'], async (err, row) => {
             if (!row) {
-                const hash = await argon2.hash('admin123', { type: argon2.argon2id });
+                const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+                const hash = await argon2.hash(adminPassword, { type: argon2.argon2id });
                 const token = crypto.randomBytes(32).toString('hex');
                 db.run(`INSERT INTO users (id, username, email, password_hash, role, api_token) 
                         VALUES (?, ?, ?, ?, ?, ?)`, [crypto.randomUUID(), 'admin', 'admin@example.com', hash, 'admin', token]);
                 console.log('💎 Admin seeded successfully.');
+                console.log('⚠️  IMPORTANT: Change admin password in production!');
             }
         });
-
-        db.run('ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0', () => {});
-        db.run('ALTER TABLE users ADD COLUMN lockout_until INTEGER DEFAULT NULL', () => {});
-        db.run('ALTER TABLE users ADD COLUMN api_token TEXT', () => {});
 
         // Auto-cleanup: usuń login_attempts starsze niż 7 dni
         db.run('DELETE FROM login_attempts WHERE attempted_at < ?', [Date.now() - 7 * 24 * 60 * 60 * 1000]);
     });
+    }
 };
 
-module.exports = { db, initDB };
+/**
+ * Get database instance (SQLite) or adapter (Supabase)
+ */
+const getDB = () => {
+    if (DATABASE_TYPE === 'supabase') {
+        return adapter;
+    }
+    return db;
+};
+
+module.exports = { 
+    db, 
+    adapter,
+    initDB,
+    getDB,
+    DATABASE_TYPE
+};

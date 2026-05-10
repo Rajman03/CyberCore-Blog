@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const { db } = require('../config/db');
 const { requireAuth, isAdmin } = require('../middleware/auth');
 const { validate, authSchemas } = require('../middleware/validation');
+const { logger } = require('../middleware/logger');
 const { 
     bruteForceGuard, 
     recordFailedAttempt, 
@@ -19,11 +20,19 @@ const SESSION_EXPIRY = 24 * 60 * 60 * 1000;
 // --- Dedykowany Rate Limiter na auth (ostrzejszy niż globalny) ---
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,  // 15 minut
-    max: 20,                    // Max 20 prób na 15 min (login + register łącznie)
+    max: 10,                    // Max 10 prób na 15 min (login + register łącznie)
     message: { error: '🛡️ Za dużo zapytań uwierzytelniania. Spróbuj za 15 minut.' },
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: true, // Nie licz udanych logowań
+    keyGenerator: (req, res) => req.ip || req.connection.remoteAddress // Rate limit per IP
+});
+
+const passwordResetLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,  // 1 godzina
+    max: 5,                     // Max 5 żądań reset hasła na godzinę
+    message: { error: '🛡️ Zbyt wiele żądań reset hasła. Spróbuj za 1 godzinę.' },
+    skipSuccessfulRequests: true,
 });
 
 router.use(authLimiter);
@@ -62,6 +71,7 @@ router.post('/login', bruteForceGuard, validate(authSchemas.login), (req, res) =
         if (!user) {
             // Nie zdradzaj czy email istnieje — ale loguj próbę
             recordFailedAttempt(ip, email, userAgent);
+            logger.security.login(false, email, ip, { reason: 'user_not_found' });
             // Celowe opóźnienie — timing attack prevention
             await argon2.hash('dummy-password-to-waste-time', { type: argon2.argon2id });
             return res.status(401).json({ error: 'Nieprawidłowe dane logowania.' });
@@ -70,6 +80,7 @@ router.post('/login', bruteForceGuard, validate(authSchemas.login), (req, res) =
         // Sprawdź lockout per user (istniejący mechanizm)
         if (user.lockout_until && Date.now() < user.lockout_until) {
             recordFailedAttempt(ip, email, userAgent);
+            logger.security.bruteForce(email, ip, 'account_lockout');
             const remainingMin = Math.ceil((user.lockout_until - Date.now()) / 60000);
             return res.status(403).json({ 
                 error: `Konto tymczasowo zablokowane. Spróbuj za ${remainingMin} min.` 
@@ -80,6 +91,7 @@ router.post('/login', bruteForceGuard, validate(authSchemas.login), (req, res) =
         if (!(await argon2.verify(user.password_hash, password))) {
             const attempts = (user.failed_login_attempts || 0) + 1;
             const ipResult = recordFailedAttempt(ip, email, userAgent);
+            logger.security.login(false, email, ip, { attempts, reason: 'invalid_password' });
             
             if (attempts >= 5) {
                 // Progresywny lockout per user: 15min, 30min, 60min...
@@ -92,7 +104,7 @@ router.post('/login', bruteForceGuard, validate(authSchemas.login), (req, res) =
                 db.run('UPDATE users SET failed_login_attempts = ?, lockout_until = ? WHERE id = ?', 
                     [attempts, lockoutUntil, user.id]);
                 
-                console.warn(`🚨 [ACCOUNT-LOCK] User ${email} zablokowany na ${lockDuration / 60000} min (próba #${attempts})`);
+                logger.security.bruteForce(email, ip, `exceeded_max_attempts (${attempts})`);
                 
                 return res.status(403).json({ 
                     error: `Konto zablokowane z powodu zbyt wielu nieudanych prób. Spróbuj za ${Math.ceil(lockDuration / 60000)} min.` 
@@ -101,7 +113,6 @@ router.post('/login', bruteForceGuard, validate(authSchemas.login), (req, res) =
                 db.run('UPDATE users SET failed_login_attempts = ? WHERE id = ?', [attempts, user.id]);
                 return res.status(401).json({ 
                     error: 'Nieprawidłowe dane logowania.',
-                    // Podpowiedź ile prób zostało (opcjonalne, można usunąć w produkcji)
                     attemptsRemaining: 5 - attempts
                 });
             }
@@ -110,6 +121,7 @@ router.post('/login', bruteForceGuard, validate(authSchemas.login), (req, res) =
         // --- Logowanie udane ---
         db.run('UPDATE users SET failed_login_attempts = 0, lockout_until = NULL WHERE id = ?', [user.id]);
         recordSuccessfulLogin(ip, email, userAgent);
+        logger.security.login(true, email, ip, { userId: user.id });
 
         const sessionId = crypto.randomBytes(48).toString('hex');
         const expiresAt = Date.now() + SESSION_EXPIRY;
@@ -139,7 +151,7 @@ router.post('/logout', (req, res) => {
 
 // --- ME ---
 router.get('/me', requireAuth, (req, res) => {
-    res.json({ user: { username: req.user.username, role: req.user.role, token: req.user.api_token } });
+    res.json({ user: { username: req.user.username, role: req.user.role } });
 });
 
 // --- ADMIN: Statystyki ataków ---
@@ -147,6 +159,21 @@ router.get('/security/stats', requireAuth, isAdmin, (req, res) => {
     getLoginStats((err, stats) => {
         if (err) return res.status(500).json({ error: 'Nie udało się pobrać statystyk.' });
         res.json(stats);
+    });
+});
+
+// --- ADMIN: Security Logs ---
+router.get('/security/logs', requireAuth, isAdmin, (req, res) => {
+    const { getSecurityLogs, getLogStatistics } = require('../middleware/logger');
+    const limit = Math.min(parseInt(req.query.limit) || 100, 500);
+    
+    const logs = getSecurityLogs().slice(-limit);
+    const stats = getLogStatistics(1);
+    
+    res.json({
+        statistics: stats,
+        recentLogs: logs,
+        logCount: logs.length
     });
 });
 

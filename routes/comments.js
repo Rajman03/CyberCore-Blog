@@ -6,9 +6,13 @@ const { requireAuth } = require('../middleware/auth');
 const { validate, commentSchemas } = require('../middleware/validation');
 
 router.get('/posts/:postId/comments', (req, res) => {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const offset = (page - 1) * limit;
+    
     db.all(`SELECT comments.*, users.username FROM comments 
             JOIN users ON comments.user_id = users.id 
-            WHERE post_id = ? ORDER BY created_at ASC`, [req.params.postId], (err, rows) => {
+            WHERE post_id = ? ORDER BY created_at ASC LIMIT ? OFFSET ?`, [req.params.postId, limit, offset], (err, rows) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.json(rows || []);
     });

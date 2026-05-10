@@ -7,9 +7,13 @@ const { requireAuth, loadUserOptional } = require('../middleware/auth');
 // Zwraca listę artykułów premium (preview tylko dla gości)
 router.get('/articles', loadUserOptional, (req, res) => {
     const isPremium = req.user?.subscription_tier === 'premium' || req.user?.role === 'admin' || req.user?.role === 'premium';
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit) || 20);
+    const offset = (page - 1) * limit;
 
     db.all(
-        'SELECT posts.*, users.username as author FROM posts JOIN users ON posts.author_id = users.id WHERE posts.is_premium = 1 ORDER BY created_at DESC',
+        'SELECT posts.*, users.username as author FROM posts JOIN users ON posts.author_id = users.id WHERE posts.is_premium = 1 ORDER BY created_at DESC LIMIT ? OFFSET ?',
+        [limit, offset],
         (err, rows) => {
             if (err) return res.status(500).json({ error: 'Database error' });
 
@@ -80,15 +84,40 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
 // ─── POST /api/paywall/webhook ─────────────────────────────────
 // Webhook do nasłuchiwania eventów ze Stripe (np. po opłaceniu)
 router.post('/webhook', express.raw({type: 'application/json'}), (req, res) => {
-    // TODO: Zweryfikuj sygnaturę Stripe (stripe.webhooks.constructEvent)
-    const event = req.body; 
+    const sig = req.headers['stripe-signature'];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    let event;
+    try {
+        // WAŻNE: Wszystkie webhooks powinny być weryfikowane!
+        if (!endpointSecret) {
+            console.warn('⚠️  STRIPE_WEBHOOK_SECRET nie ustawiony');
+            return res.status(400).json({ error: 'Webhook secret not configured' });
+        }
+        
+        // TODO: Odkomentuj gdy zainstalujesz stripe
+        // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        // event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+        
+        // Symulacja dla developerów:
+        event = JSON.parse(req.body.toString());
+    } catch (err) {
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
 
-    // Symulacja obsługi eventu zapłaty
+    // Obsługa eventu
     if (event.type === 'checkout.session.completed') {
         const userId = event.data.object.client_reference_id;
+        if (!userId) {
+            return res.status(400).json({ error: 'Invalid client_reference_id' });
+        }
+        
         db.run(
             `UPDATE users SET subscription_tier = 'premium', role = CASE WHEN role = 'user' THEN 'premium' ELSE role END WHERE id = ?`,
-            [userId]
+            [userId],
+            (err) => {
+                if (err) console.error('Webhook error:', err);
+            }
         );
     }
     
