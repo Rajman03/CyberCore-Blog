@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <title>Logowanie | SECURE.BLOG</title>
+</head>
+<body>
+    <div class="container fade-in" style="max-width: 450px; margin-top: 10vh;">
+        <div class="glass-card" style="padding: 3rem 2rem;">
+            <div style="text-align: center; margin-bottom: 2.5rem;">
+                <div style="width: 60px; height: 60px; background: var(--primary); border-radius: 16px; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);">🔑</div>
+                <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Witaj Ponownie</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Zaloguj się do swojego bezpiecznego panelu</p>
+            </div>
+
+            <form id="login-form" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <div class="form-group">
+                    <label>Adres Email</label>
+                    <input type="email" id="email" required placeholder="twoj@email.pl">
+                </div>
+                <div class="form-group">
+                    <label>Hasło</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                
+                <button type="submit" style="width: 100%; padding: 14px; font-weight: 700; margin-top: 1rem;">Zaloguj Bezpiecznie</button>
+            </form>
+
+            <div id="error-msg" style="margin-top: 1.5rem; color: var(--danger); font-size: 0.85rem; text-align: center; min-height: 1.2rem;"></div>
+
+            <div style="margin-top: 2rem; text-align: center; font-size: 0.9rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
+                <p style="color: var(--text-muted); margin-bottom: 0.5rem;">Nie masz konta? <a href="register.html" style="color: var(--primary); font-weight: 700;">Zarejestruj się</a></p>
+                <a href="forgot-password.html" style="color: var(--text-muted); font-size: 0.8rem; text-decoration: none;">Zapomniałeś hasła?</a>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="/" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem;">← Powrót do strony głównej</a>
+        </div>
+    </div>
+
+    <script src="js/core.js"></script>
+    <script>
+        document.getElementById('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const msg = document.getElementById('error-msg');
+            
+            try {
+                btn.disabled = true;
+                btn.innerText = 'Weryfikacja...';
+                msg.innerText = '';
+
+                await API.login(
+                    document.getElementById('email').value,
+                    document.getElementById('password').value
+                );
+                
+                window.location.href = '/';
+            } catch (err) {
+                msg.innerText = `❌ ${err.message}`;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Zaloguj Bezpiecznie';
+            }
+        };
+    </script>
+</body>
+</html>

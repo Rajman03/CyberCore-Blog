@@ -88,6 +88,14 @@ const API = {
             method: 'POST',
             body: JSON.stringify({ post_id: postId, content })
         });
+    },
+
+    async me() {
+        try {
+            return await this.fetch('/auth/me');
+        } catch (err) {
+            return null;
+        }
     }
 };
 

@@ -4,10 +4,11 @@ const argon2 = require('argon2');
 const crypto = require('crypto');
 const { db } = require('../config/db');
 const { requireAuth } = require('../middleware/auth');
+const { validate, authSchemas } = require('../middleware/validation');
 
 const SESSION_EXPIRY = 24 * 60 * 60 * 1000;
 
-router.post('/register', async (req, res) => {
+router.post('/register', validate(authSchemas.register), async (req, res) => {
     const { username, email, password } = req.body;
     try {
         const hash = await argon2.hash(password, { type: argon2.argon2id });
@@ -21,7 +22,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-router.post('/login', (req, res) => {
+router.post('/login', validate(authSchemas.login), (req, res) => {
     const { email, password } = req.body;
     db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
         if (!user || !(await argon2.verify(user.password_hash, password))) {

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <title>Mój Profil | SECURE.BLOG</title>
+</head>
+<body>
+    <nav>
+        <div class="logo" onclick="window.location.href='/'" style="cursor: pointer;">SECURE.BLOG</div>
+        <div id="nav-links" style="display: flex; align-items: center; gap: 20px;"></div>
+    </nav>
+
+    <div class="container fade-in">
+        <div class="dashboard-grid">
+            <aside>
+                <div class="glass-card" style="text-align: center; padding: 2rem 1.5rem;">
+                    <div class="profile-avatar" id="avatar-initials">--</div>
+                    <h2 id="display-username" style="margin-bottom: 0.5rem;">Ładowanie...</h2>
+                    <p id="display-email" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">---</p>
+                    <div id="role-badge-container"></div>
+                    <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 2rem 0;">
+                    <div style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
+                        <div class="stat-card">
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Status Konta</span>
+                            <div style="color: var(--accent); font-weight: 700; font-size: 1rem;">Aktywne</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <main>
+                <header style="margin-bottom: 2rem;">
+                    <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">👤 Twój Profil</h1>
+                    <p style="color: var(--text-muted);">Zarządzaj swoimi danymi i ustawieniami bezpieczeństwa.</p>
+                </header>
+
+                <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                            <span>📝</span> Informacje Podstawowe
+                        </h3>
+                        <form id="profile-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div class="form-group">
+                                <label>Nazwa Użytkownika</label>
+                                <input type="text" id="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Adres Email</label>
+                                <input type="email" id="email" required>
+                            </div>
+                            <div style="grid-column: 1 / -1;">
+                                <button type="submit" style="width: auto; padding: 12px 30px;">Zaktualizuj Profil</button>
+                            </div>
+                        </form>
+                        <div id="profile-msg" style="margin-top: 1rem; font-size: 0.9rem;"></div>
+                    </div>
+
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; color: var(--danger);">
+                            <span>🔒</span> Bezpieczeństwo
+                        </h3>
+                        <form id="password-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div class="form-group">
+                                <label>Obecne Hasło</label>
+                                <input type="password" id="old-password" required placeholder="••••••••">
+                            </div>
+                            <div class="form-group">
+                                <label>Nowe Hasło</label>
+                                <input type="password" id="new-password" required placeholder="Min. 8 znaków">
+                            </div>
+                            <div style="grid-column: 1 / -1;">
+                                <button type="submit" class="secondary" style="width: auto; padding: 12px 30px; border-color: rgba(244, 63, 94, 0.4); color: var(--danger);">Zmień Hasło</button>
+                            </div>
+                        </form>
+                        <div id="password-msg" style="margin-top: 1rem; font-size: 0.9rem;"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="js/core.js"></script>
+    <script>
+        let currentUser = null;
+
+        async function init() {
+            try {
+                const meData = await API.me();
+                if (!meData) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                currentUser = meData.user;
+                updateNav();
+                populateProfile();
+            } catch (err) {
+                console.error('Init error:', err);
+                window.location.href = '/login.html';
+            }
+        }
+
+        function updateNav() {
+            const navLinks = document.getElementById('nav-links');
+            navLinks.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px; margin-right: 10px; padding-right: 20px; border-right: 1px solid var(--glass-border);">
+                    <span style="opacity:0.6; font-size:0.85rem;">Witaj, <strong style="color: var(--accent);">${currentUser.username}</strong></span>
+                    <span class="badge badge-${currentUser.role}" style="font-size: 0.6rem;">${currentUser.role}</span>
+                </div>
+                <a href="/" class="nav-link">Home</a>
+                <a href="/profile.html" class="nav-link">Mój Profil</a>
+                ${currentUser.role === 'admin' ? '<a href="/admin.html" class="nav-link" style="color: var(--primary); font-weight: 800;">Panel Admina</a>' : ''}
+                <button onclick="logout()" class="secondary" style="padding: 8px 16px; font-size: 0.8rem; border-color: rgba(244, 63, 94, 0.3); color: var(--danger);">Wyloguj</button>
+            `;
+        }
+
+        function populateProfile() {
+            document.getElementById('avatar-initials').innerText = currentUser.username.substring(0, 2).toUpperCase();
+            document.getElementById('display-username').innerText = currentUser.username;
+            document.getElementById('display-email').innerText = currentUser.email;
+            document.getElementById('username').value = currentUser.username;
+            document.getElementById('email').value = currentUser.email;
+            document.getElementById('role-badge-container').innerHTML = `<span class="badge badge-${currentUser.role}">${currentUser.role.toUpperCase()}</span>`;
+        }
+
+        document.getElementById('profile-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('profile-msg');
+            try {
+                await API.updateProfile({
+                    username: document.getElementById('username').value,
+                    email: document.getElementById('email').value
+                });
+                msg.style.color = 'var(--accent)';
+                msg.innerText = '✅ Profil zaktualizowany pomyślnie!';
+                setTimeout(() => location.reload(), 1000);
+            } catch (err) {
+                msg.style.color = 'var(--danger)';
+                msg.innerText = '❌ ' + err.message;
+            }
+        };
+
+        document.getElementById('password-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('password-msg');
+            try {
+                await API.changePassword(
+                    document.getElementById('old-password').value,
+                    document.getElementById('new-password').value
+                );
+                msg.style.color = 'var(--accent)';
+                msg.innerText = '✅ Hasło zostało zmienione!';
+                e.target.reset();
+            } catch (err) {
+                msg.style.color = 'var(--danger)';
+                msg.innerText = '❌ ' + err.message;
+            }
+        };
+
+        window.onload = init;
+    </script>
+</body>
+</html>

@@ -125,8 +125,7 @@ async function changeRole(userId, newRole) {
     }
 }
 
-// Inicjalizacja
-document.addEventListener('DOMContentLoaded', () => {
+window.initAdmin = () => {
     loadAdminPosts();
     loadUsers();
-});
+};

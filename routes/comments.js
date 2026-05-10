@@ -3,6 +3,7 @@ const router = express.Router();
 const xss = require('xss');
 const { db } = require('../config/db');
 const { requireAuth } = require('../middleware/auth');
+const { validate, commentSchemas } = require('../middleware/validation');
 
 router.get('/:postId/comments', (req, res) => {
     db.all(`SELECT comments.*, users.username FROM comments 
@@ -12,7 +13,7 @@ router.get('/:postId/comments', (req, res) => {
     });
 });
 
-router.post('/comments', requireAuth, (req, res) => {
+router.post('/comments', requireAuth, validate(commentSchemas.create), (req, res) => {
     const { post_id, content } = req.body;
     const cleanContent = xss(content);
     
