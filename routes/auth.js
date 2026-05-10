@@ -18,16 +18,34 @@ router.post('/register', validate(authSchemas.register), async (req, res) => {
             res.status(201).json({ message: 'User registered' });
         });
     } catch (err) {
-        res.status(500).json({ error: 'Server error' });
+        next(err);
     }
 });
 
 router.post('/login', validate(authSchemas.login), (req, res) => {
     const { email, password } = req.body;
     db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
-        if (!user || !(await argon2.verify(user.password_hash, password))) {
+        if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
+
+        if (user.lockout_until && Date.now() < user.lockout_until) {
+            return res.status(403).json({ error: 'Konto tymczasowo zablokowane. Spróbuj ponownie później.' });
+        }
+
+        if (!(await argon2.verify(user.password_hash, password))) {
+            const attempts = (user.failed_login_attempts || 0) + 1;
+            if (attempts >= 5) {
+                const lockoutUntil = Date.now() + 15 * 60 * 1000; // 15 mins
+                db.run('UPDATE users SET failed_login_attempts = ?, lockout_until = ? WHERE id = ?', [attempts, lockoutUntil, user.id]);
+                return res.status(403).json({ error: 'Konto tymczasowo zablokowane z powodu zbyt wielu nieudanych prób logowania.' });
+            } else {
+                db.run('UPDATE users SET failed_login_attempts = ? WHERE id = ?', [attempts, user.id]);
+                return res.status(401).json({ error: 'Invalid credentials' });
+            }
+        }
+
+        db.run('UPDATE users SET failed_login_attempts = 0, lockout_until = NULL WHERE id = ?', [user.id]);
 
         const sessionId = crypto.randomBytes(48).toString('hex');
         const expiresAt = Date.now() + SESSION_EXPIRY;
@@ -38,8 +56,9 @@ router.post('/login', validate(authSchemas.login), (req, res) => {
         res.cookie('session_id', sessionId, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: SESSION_EXPIRY
+            sameSite: 'strict',
+            maxAge: SESSION_EXPIRY,
+            signed: true
         });
 
         res.json({ message: 'Logged in', username: user.username, role: user.role });
@@ -47,7 +66,7 @@ router.post('/login', validate(authSchemas.login), (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
-    const sessionId = req.cookies.session_id;
+    const sessionId = req.signedCookies.session_id;
     if (sessionId) db.run('DELETE FROM sessions WHERE session_id = ?', [sessionId]);
     res.clearCookie('session_id');
     res.json({ message: 'Logged out' });

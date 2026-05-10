@@ -17,7 +17,9 @@ const initDB = () => {
             password_hash TEXT NOT NULL,
             role TEXT DEFAULT 'user',
             reset_token TEXT,
-            reset_expires INTEGER
+            reset_expires INTEGER,
+            failed_login_attempts INTEGER DEFAULT 0,
+            lockout_until INTEGER DEFAULT NULL
         )`);
 
         db.run(`CREATE TABLE IF NOT EXISTS sessions (
@@ -57,6 +59,14 @@ const initDB = () => {
                         VALUES (?, ?, ?, ?, ?)`, [crypto.randomUUID(), 'admin', 'admin@example.com', hash, 'admin']);
                 console.log('💎 Admin seeded successfully.');
             }
+        });
+
+        // Migration for existing tables
+        db.run('ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0', (err) => {
+            // ignore error if column already exists
+        });
+        db.run('ALTER TABLE users ADD COLUMN lockout_until INTEGER DEFAULT NULL', (err) => {
+            // ignore error if column already exists
         });
     });
 };

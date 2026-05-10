@@ -3,12 +3,13 @@ const router = express.Router();
 const argon2 = require('argon2');
 const { db } = require('../config/db');
 const { requireAuth } = require('../middleware/auth');
+const { validate, profileSchemas } = require('../middleware/validation');
 
 router.get('/', requireAuth, (req, res) => {
     res.json(req.user);
 });
 
-router.patch('/', requireAuth, (req, res) => {
+router.patch('/', requireAuth, validate(profileSchemas.update), (req, res) => {
     const { username, email } = req.body;
     db.run('UPDATE users SET username = ?, email = ? WHERE id = ?', [username, email, req.user.id], (err) => {
         if (err) return res.status(400).json({ error: 'Data already in use' });
@@ -16,7 +17,7 @@ router.patch('/', requireAuth, (req, res) => {
     });
 });
 
-router.patch('/password', requireAuth, (req, res) => {
+router.patch('/password', requireAuth, validate(profileSchemas.password), (req, res) => {
     const { oldPassword, newPassword } = req.body;
     db.get('SELECT password_hash FROM users WHERE id = ?', [req.user.id], async (err, user) => {
         if (!(await argon2.verify(user.password_hash, oldPassword))) {

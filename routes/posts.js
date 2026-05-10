@@ -12,8 +12,9 @@ router.get('/', (req, res) => {
 
 router.post('/', requireAuth, isAdmin, validate(postSchemas.create), (req, res) => {
     const { title, content } = req.body;
+    const safeTitle = xss(title);
     const safeContent = xss(content);
-    db.run('INSERT INTO posts (title, content, author_id) VALUES (?, ?, ?)', [title, safeContent, req.user.id], () => res.status(201).json({ message: 'Post live' }));
+    db.run('INSERT INTO posts (title, content, author_id) VALUES (?, ?, ?)', [safeTitle, safeContent, req.user.id], () => res.status(201).json({ message: 'Post live' }));
 });
 
 router.delete('/:id', requireAuth, isAdmin, (req, res) => {

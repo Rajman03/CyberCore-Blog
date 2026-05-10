@@ -14,7 +14,10 @@ const authSchemas = {
     register: Joi.object({
         username: Joi.string().alphanum().min(3).max(30).required(),
         email: Joi.string().email().required(),
-        password: Joi.string().min(8).required()
+        password: Joi.string().min(8).pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$')).required()
+            .messages({
+                'string.pattern.base': 'Hasło musi zawierać co najmniej jedną wielką literę, jedną małą literę i jedną cyfrę.'
+            })
     }),
     login: Joi.object({
         email: Joi.string().email().required(),
@@ -36,9 +39,24 @@ const commentSchemas = {
     })
 };
 
+const profileSchemas = {
+    update: Joi.object({
+        username: Joi.string().alphanum().min(3).max(30).required(),
+        email: Joi.string().email().required()
+    }),
+    password: Joi.object({
+        oldPassword: Joi.string().required(),
+        newPassword: Joi.string().min(8).pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$')).required()
+            .messages({
+                'string.pattern.base': 'Hasło musi zawierać co najmniej jedną wielką literę, jedną małą literę i jedną cyfrę.'
+            })
+    })
+};
+
 module.exports = {
     validate,
     authSchemas,
     postSchemas,
-    commentSchemas
+    commentSchemas,
+    profileSchemas
 };

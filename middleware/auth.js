@@ -1,7 +1,7 @@
 const { db } = require('../config/db');
 
 const requireAuth = (req, res, next) => {
-    const sessionId = req.cookies.session_id;
+    const sessionId = req.signedCookies.session_id;
     if (!sessionId) return res.status(401).json({ error: 'Session required' });
 
     db.get('SELECT * FROM sessions WHERE session_id = ?', [sessionId], (err, session) => {
@@ -21,7 +21,7 @@ const requireAuth = (req, res, next) => {
 };
 
 const loadUserOptional = (req, res, next) => {
-    const sessionId = req.cookies.session_id;
+    const sessionId = req.signedCookies.session_id;
     if (!sessionId) return next();
 
     db.get('SELECT * FROM sessions WHERE session_id = ?', [sessionId], (err, session) => {

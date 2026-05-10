@@ -77,6 +77,12 @@ app.use('/api', commentRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/users', userRoutes);
 
+// --- Global Error Handler ---
+app.use((err, req, res, next) => {
+    console.error('🚨 Błąd serwera:', err.stack);
+    res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+});
+
 // --- Server Launch ---
 app.listen(PORT, () => {
     console.log(`
