@@ -263,7 +263,7 @@ Key steps:
 
 ## 📝 License
 
-MIT License - See LICENSE file
+Licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE).
 
 ## 🤝 Contributing
 
